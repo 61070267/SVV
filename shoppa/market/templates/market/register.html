@@ -1,0 +1,43 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+<div class="bg-orange text-pink p-2">
+    <div class="container">
+		<div class="login100">
+                <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                    <input type="hidden" name="usertype" id="usertype" value="">
+                        <h1 class="text-center">Register</h1>
+                    <hr/>
+                    <ul class="list-group">
+                        <li class="list-group-item card">
+                            {{ Userform.as_p }}
+                        </li>
+                    </ul>
+                    <hr/>
+                    <ul class="list-group">
+                        <h2 class="text-center">You Are</h2>
+                        <div class="col row">
+                            <button id="Sellbutt" type="button" class="btn btn-outline-primary col mx-5 pt-3">
+                                <i style="font-size: 5em; color: white;" class="fad fa-store mx-2"></i>
+                                <br><h3>Seller</h3>
+                            </button>
+                            <button id="Buybutt" type="button" class="btn btn-outline-success col mx-5 pt-3">
+                                <i style="font-size: 5em; color: white;" class="fad fa-shopping-basket mx-2"></i>
+                                <br><h3>Buyer</h3>
+                            </button>
+                        </div>
+                    </ul>
+
+                    <ul id="Info-field" class="list-group my-4">
+                        
+                    </ul>
+                    <div class="container-login100-form-btn">
+                        <button class="login100-form-btn" id='submit' type="submit" hidden>Register</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    <div>
+</div>
+
+<script src="{% static 'js/register.js' %}"></script>
+{% endblock content %}

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="bg-orange text-orange p-2">
+	<div class="container">
+			<form action="{% url 'login' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" method="POST">
+					{% csrf_token %}
+				<h1 class="text-center">Login</h1>
+                <div class="wrap-input100 validate-input">
+                            <input type="text" class="form-control" id="username" name="username"
+                            placeholder="Username" required>
+                </div>
+
+                <div class="wrap-input100 validate-input">
+                    <input type="password" class="form-control" id="password" name="password"
+                        placeholder="Password" required>
+                </div>
+                <div class="container-login100-form-btn">
+						<button class="login100-form-btn">
+							Login
+						</button>
+					</div>
+            </form>
+        </div>    
+    </div>
+</div>
+{% endblock content %}

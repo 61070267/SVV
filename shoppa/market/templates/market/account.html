@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card bg-orange text-pink px-2">
+    <div class="container">
+    {% comment %} <div class="wrap-login100"> {% endcomment %}
+        <form method="post" enctype="multipart/form-data">
+        <ul class="list-group">
+        {% csrf_token %}
+        <h1 class="text-center">{{ user.username }}'s Account </h1>
+        
+        <hr/>
+        <ul class="list-group" style="backfr">
+            <li class="list-group-item card">
+                {{ form }}
+            </li>
+        </ul>
+         <div class="container-login100-form-btn">
+			<button class="login100-form-btn" id='submit' type="submit">save</button>
+        </div>
+    </form>
+    </div>
+</div>
+{% endblock content %}

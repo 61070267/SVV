@@ -1,0 +1,151 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'fontawesome/css/all.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static '/css/style.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static '/css/main.css' %}">
+    <link rel="shortcut icon" href="{% static 'logo2.png' %}" type="image/x-icon">
+    <title>Shoppa Matta</title>
+
+    <script src="{% static 'js/jquery-3.4.1.slim.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.bundle.js' %}"></script>
+    <script src="{% static 'fontawesome/js/all.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+<div class="container-fluid min-vh-100 col bg-grey">
+    <!-- Message POP UP -->
+        <div class="toast bg-light w-25 mt-5 text-center" data-delay="2000" id="notification">
+            <div class="toast-header text-white">
+                <h5><strong class="mr-auto ">Error</strong></h5>
+            </div>
+            <div class="toast-body">
+                <h6>{{error}}</h6>
+            </div>
+        </div>
+    <!-- Message POP UP -->
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark rounded-bottom fixed-top">
+        <a class="navbar-brand" href="{% url 'index' %}">
+            <img class="img-fluid mx-auto d-block" width="50" src="{% static 'logo1.png' %}">
+            <span style="color: #FFAA00;">Shoppa</span> <span style="color: #DB10B5;">Matta</span></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'index' %}"><i style="font-size: 3em; color: #FFAA00;"
+                            class="fad fa-home mx-2"></i><span class="sr-only">(current)</span></a>
+                </li>
+                {% if user.groups.all.0.name != "Seller" %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'catalog' %}"><i style="font-size: 3em; color: white;"
+                            class="fad fa-books mx-2"></i></a>
+                </li>
+                {% endif %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i style="font-size: 3em; color: #DB10B5;"
+                            class="fad fa-user mx-2"></i>
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        {% if user.is_authenticated %}
+                            {% if user.groups.all.0.name != "Seller" %}
+                            <a class="dropdown-item" href="{% url 'payment' %}">Payment History</a>
+                            <div class="dropdown-divider"></div>
+                            {% endif %}
+                            <a class="dropdown-item" href="{% url 'profile' %}">Profile Setting</a>
+                            <a class="dropdown-item" href="{% url 'account' %}">Account Setting</a>
+                            <a class="dropdown-item" href="#"></a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" data-toggle="modal" data-target="#logoutModal">Log Out</a>
+                        {% else %}
+                            <a class="dropdown-item" href="{% url 'login' %}">Log In</a>
+                            <a class="dropdown-item" href="{% url 'register' %}">Register</a>
+                        {% endif %}
+                    </div>
+                </li>
+            </ul>
+            {% if user.groups.all.0.name != "Seller" %}
+            <form class="mr-2 my-auto w-75 d-inline-block " action="{% url 'search' %}" method="GET">
+                <div class="input-group">
+                    <input type="text" class="form-control border border-right-0" placeholder="Search..." name="keyword" value = "{{ keyword }}">
+                    <span class="input-group-append">
+                        <button class="btn btn-outline-light border border-left-0" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </span>
+                </div>
+            </form>
+            {% endif %}
+            {% if user.groups.all.0.name != "Seller" %}
+            <a class="btn mx-2 my-sm-0" href="{% url 'cart' %}" role="button">
+                <i style="font-size: 2em; color: orange;" class="fad fa-shopping-cart mx-2"></i>
+            </a>
+            {% endif %}
+        </div>
+    </nav>
+     <div class="row-fluid pt-6">
+            {% block content %} {% endblock content %}
+    </div>
+</div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logoutModalLabel">Log Out?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+                    <a type="button" class="btn btn-primary" href="{% url 'logout' %}">Confirm</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        axios.defaults.xsrfCookieName = 'csrftoken';
+        axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
+        function PushNotification(message=" ", asError=true){
+            noti = document.getElementById("notification");
+            notihead = noti.firstElementChild;
+            notibody = notihead.nextElementSibling;
+
+            if (asError){
+                notihead.classList.remove("bg-success");
+                notihead.classList.add("bg-danger");
+                notihead.firstElementChild.firstChild.innerHTML = "Error";
+            }else{
+                notihead.classList.remove("bg-danger");
+                notihead.classList.add("bg-success");
+                notihead.firstElementChild.firstChild.innerHTML = "Success";
+            }
+            notibody.firstElementChild.innerHTML = message;
+
+            $('.toast').toast('show')
+        }
+
+        {% if error %} 
+            PushNotification("{{ error }}", asError=true);
+        {% elif success %}
+            PushNotification("{{ success }}", asError=false);
+        {% endif %}
+    </script>
+    
+</body>
+
+</html>

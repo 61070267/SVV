@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card bg-orange text-pink px-2">
+	<div class="container">
+
+    <form  method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <h1 class="text-center">{{ user.username }}'s Profile</h1>
+        <hr/>
+        <ul class="list-group" style="backfr">
+                {% if user.groups.all.0.name == "Seller" %}
+                <div class="card social-prof">
+            <div class="card-body">
+                <div class="wrapper">
+                        <img src="/media/{{ form.shop_icon.value }}" width="200" class="img-fluid d-block mx-auto rounded-circle img-thumbnail position-absolute buttom-10" >
+                        <img src="/media/{{ form.shop_bg.value }}" height="500" class="img-rounded w-100">
+                        <hr/>
+                {% elif user.groups.all.0.name == "Buyer" %}
+                    <img src="/media/{{ form.cus_img.value }}" width="200" class="img-fluid d-block mx-auto rounded-circle img-thumbnail">
+                {% endif %}
+            <li class="list-group-item card">
+                {{ form }}
+            </li>
+        </ul>
+        <div class="container-login100-form-btn">
+			<button class="login100-form-btn" id='submit' type="submit">save</button>
+        </div>
+    </form>
+    </div>
+</div>
+{% endblock content %}

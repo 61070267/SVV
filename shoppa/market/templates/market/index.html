@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="bg-orange text-pink p-2">
+    <div class="container">
+            <h2 class="text-center">Home Page</h2>
+        </div>
+ 
+        <ul class="row text-center justify-content-center" id="product-box" style="backfr">
+        </ul>
+        {% if user.groups.all.0.name == "Seller" %}
+        <div class="card">
+            <a class="btn btn-outline-secondary" onclick="newProduct()">
+                <i style="font-size: 1em; color: orange;" class="fad fa-plus m-2"></i>
+            </a>
+        </div>
+        {% endif %}
+        <button class="btn btn-primary col-12" onclick="showProduct()"><h3>Load More</h3></button>
+    </div>    
+</div>
+
+<script>
+    let product_box = document.getElementById("product-box");
+
+    let itemstart = 0; //count item for load more when scroll to bottom
+    let itemstop = 0; //count item for load more when scroll to bottom
+    let product_dump = {}; //store product response.data for render
+    
+    document.body.onload = loadProduct();
+    function loadProduct(event){
+        axios.get('{% url "index-api" %}', {
+            params: {
+                shop: "{{user.username}}"
+            }
+        })
+        .then(function(response) {
+            product_dump = response.data
+        })
+        .catch(function(error) {
+            console.log(error)
+        })
+        .then(function() {
+           showProduct();
+           //console.log(product_dump)
+        });
+    }
+
+    function deleteProduct(event){
+        axios.delete("{% url 'product-api' %}", {
+            data:{'product_id': event.target.parentNode.id}
+        })
+        .then(function(response) {
+            event.target.parentNode.remove();
+        }).catch(function(error) {
+            console.log(error)
+        });
+    }
+
+    function productRender(product){
+        product_item = document.createElement('li');
+        product_item.setAttribute("class", "list-group-item card col-2 m-1");
+        product_item.setAttribute("id", product.id);
+        
+        linkimg = document.createElement('a');
+        linkimg.setAttribute("href", "{% url 'product' product_id=123 %}".replace('123', product.id));
+        img = document.createElement('img');
+        img.setAttribute("class", "img-rounded");
+        img.setAttribute("width", "180");
+        img.setAttribute("height", "180");
+        img.setAttribute("src", product.img);
+        pname = document.createElement('h5');
+        pname.innerHTML = "Name: " + product.name;
+        pprice = document.createElement('h6');
+        pprice.innerHTML = "Price: ฿" + product.price + "";
+        
+        linkimg.appendChild(img);
+        product_item.appendChild(linkimg);
+        product_item.appendChild(pname);
+        product_item.appendChild(pprice);
+        //product.appendChild(pdesc);
+        
+        {% if user.groups.all.0.name == "Seller" %}
+        button = document.createElement('button');
+        button.setAttribute("class", "btn btn-danger");
+        button.innerText = "Delete";
+        button.addEventListener("click", deleteProduct);
+        product_item.appendChild(button);
+        {% endif %}
+        
+        product_box.appendChild(product_item)
+    }
+
+
+    function showProduct(){
+        //
+        itemstop = Math.min(itemstop+20, product_dump.length);
+            for(;itemstart < itemstop; itemstart++){
+                //console.log(response.data[item])
+                productRender(product_dump[itemstart]);
+            }
+            itemstart = itemstop
+    }
+
+    function newProduct(event){
+        axios.get('{% url "index-api" %}', {
+        })
+        .then(function(response) {
+            productRender(response.data);
+            window.scrollTo(0,document.body.scrollHeight);
+            //console.log(response.data)
+        })
+        .catch(function(error) {
+            console.log(error)
+        })
+        .then(function() {
+           
+        });
+    }
+
+    /*window.onscroll = function(ev) {
+    if ((window.innerHeight + Math.ceil(window.pageYOffset)) >= document.body.offsetHeight) {
+        showProduct();
+    }
+};*/
+</script>
+
+{% endblock content %}

@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card bg-orange text-pink px-2">
+    <h1 class="text-center">Cart</h1>
+    <div class="text-center card container-fluid py-2" id="cart-box">
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="paymodal" tabindex="-1" role="dialog" aria-labelledby="paymodalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Purchase</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="pay_body">
+      <div class="row">
+          <h2 class="text-center col" id="pay_total">Total: </h2>
+      </div>
+      {{ payform }}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="payNow();">Confirm and Pay</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    let cart_box = document.getElementById("cart-box");
+    document.body.onload = loadCart();
+    sum_pool = 0;
+    function loadCart(event){
+        axios.get("{% url 'cart-api' %}", {
+        })
+        .then(function(response) {
+            //console.log(response.data);
+            loadCartItem(response.data.id);
+            Cartrender(response.data);
+        })
+        .catch(function(error) {
+            console.log(error)
+        })
+        .then(function() {
+           
+           //console.log(product_dump)
+        });
+    }
+
+    function loadCartItem(cart_id){
+        axios.get("{% url 'cart-api' %}", {
+                params: {
+                    'cart_item': true
+            }
+        })
+        .then(function(response) {
+            //console.log(response.data);
+            CartItemrender(response.data);
+            refreshTotal();
+        })
+        .catch(function(error) {
+            console.log(error)
+        })
+        .then(function() {
+           //console.log(product_dump)
+        });
+    }
+
+    function loadpayinfo(){
+        //alert('payinfo');
+        pay_total = document.getElementById("pay_total");
+        pay_total.innerHTML = sum_cost.innerHTML;
+    }
+
+    function refreshTotal(){
+        sum_cost.innerHTML = "Total: ฿" + sum_pool;
+    }
+
+    function payNow(){
+        id_payment = document.getElementById("id_payment");
+        alert('pay');
+
+        axios.post("{% url 'pay-api' %}", {
+            'amount': parseFloat(sum_cost.innerHTML.slice(8)) ,
+            'payment': id_payment.value
+            
+        })
+        .then(function(response) {
+            PushNotification("Payment in progess", asError = false)
+            console.log(response)
+        }).catch(function(error) {
+            PushNotification("Payment error")
+            console.log(error)
+        });
+    }
+
+    function Cartrender(data){
+        row_a = document.createElement('div');
+        row_a.classList.add("row", "justify-content-end");
+        sum_cost = document.createElement('h5');
+        sum_cost.classList.add("mr-4", "text-center");
+        //sum_cost.innerHTML = "Total: ฿" + data.sum_cost;
+        sum_cost.innerHTML = "Total: ฿" + sum_pool;
+
+        pay_butt = document.createElement('button');
+        pay_butt.classList.add("btn", "btn-success", "mr-2");
+        pay_butt.setAttribute("data-toggle", "modal");
+        pay_butt.setAttribute("data-target", "#paymodal");
+        pay_butt.setAttribute("onclick", "loadpayinfo();");
+        pay_buttlabel = document.createElement('h5');
+        pay_buttlabel.innerHTML = "Purchase";
+        pay_butt.appendChild(pay_buttlabel);
+
+        row_a.appendChild(sum_cost);
+        row_a.appendChild(pay_butt);
+        cart_box.appendChild(row_a);
+    }
+
+    function editCartItem(product_id, event){
+        if(event.keyCode == 13){
+            if (event.target.value <= 0){
+                event.target.value = 1;
+            }
+            unit_field = event.target.parentElement.previousElementSibling.childNodes[1];
+            item_field = event.target.parentElement.nextElementSibling.childNodes[1];
+            difference_price = item_field.innerHTML - event.target.value * unit_field.innerHTML;
+            item_field.innerHTML = event.target.value * unit_field.innerHTML;
+            sum_pool -= difference_price;
+            refreshTotal();
+
+            axios.put("{% url 'cart-api' %}", {
+            'product_id': product_id,
+            'quantity': parseInt(event.target.value)
+            
+        })
+        .then(function(response) {
+            PushNotification("Quantity Saved", asError = false)
+            console.log(response)
+        }).catch(function(error) {
+            console.log(error)
+        });
+        }
+        
+    }
+
+    function deleteCartItem(product_id, eventElement){
+        iprice = eventElement.previousElementSibling.lastElementChild.innerHTML;
+        sum_pool -= iprice;
+        refreshTotal();
+
+        axios.delete("{% url 'cart-api' %}", {
+            data:{'product_id': product_id
+            }
+        })
+        .then(function(response) {
+            eventElement.parentElement.parentElement.remove();
+            PushNotification("Product Removed", asError = false)
+        }).catch(function(error) {
+            console.log(error)
+        });
+    }
+
+    function CartItemrender(CartItemList){
+        for (Item in CartItemList){
+            sum_pool += CartItemList[Item].item_price;
+            row = document.createElement('div');
+            row.classList.add("row", "m-2");
+            cola = document.createElement('div');
+            cola.classList.add("col-4", "mx-2");
+            colb = document.createElement('div');
+            colb.classList.add("col", "mx-2");
+            quantity_form = document.createElement('div');
+            quantity_form.classList.add("m-1", "text-center", "row");
+            quantity = document.createElement('h5');
+            quantity.classList.add("m-1", "text-center", "col-4");
+            quantity.innerHTML = "Quantity:";
+            quantity_input = document.createElement('input');
+            quantity_input.classList.add("mx-1", "form-control", "input-lg", "col", "text-center");
+            quantity_input.setAttribute("value", CartItemList[Item].quantity);
+            quantity_input.setAttribute("type", "number");
+            //quantity_input.setAttribute("onkeyup", "alert(" + CartItemList[Item].id + ")")
+            quantity_input.setAttribute("onkeyup", "editCartItem("+CartItemList[Item].product_id+", event)");
+
+            unit_price_form = document.createElement('div');
+            unit_price_form.classList.add("m-1", "row");
+            unit_price = document.createElement('h5');
+            unit_price.classList.add("mt-3", "col-4");
+            unit_price.innerHTML = "Unit price:";
+            unit_price_value = document.createElement('h5');
+            unit_price_value.classList.add("mt-3", "col");
+            unit_price_value.innerHTML = CartItemList[Item].unit_price;
+
+            item_price_form = document.createElement('div');
+            item_price_form.classList.add("m-1", "row");
+            item_price = document.createElement('h5');
+            item_price.classList.add("m-1", "col-4");
+            item_price.innerHTML = "Item price:";
+            item_price_value = document.createElement('h5');
+            item_price_value.classList.add("m-1", "col");
+            item_price_value.innerHTML = CartItemList[Item].item_price;
+
+            product_name = document.createElement('h5');
+            product_name.classList.add("m-1", "text-center");
+            product_name.innerHTML = CartItemList[Item].product.name;
+            product_img = document.createElement('img');
+            product_img.setAttribute("src", CartItemList[Item].product.img);
+            product_img.setAttribute("width", "150");
+            product_img.setAttribute("height", "150");
+            product_img.classList.add("img-thumbnail");
+            product_img.classList.add("img-rounded");
+            delbutt = document.createElement('button');
+            delbutt.classList.add("btn", "btn-danger", "mt-4");
+            dellabel = document.createElement('h5');
+            dellabel.innerHTML = "Remove";
+            delbutt.appendChild(dellabel);
+            //delbutt.addEventListener("click", function(){ deleteCartItem(CartItemList[Item].product_id, this); });
+            delbutt.setAttribute("onclick", "deleteCartItem("+CartItemList[Item].product_id+", this)");
+
+
+            quantity_form.appendChild(quantity);
+            quantity_form.appendChild(quantity_input);
+            unit_price_form.appendChild(unit_price);
+            unit_price_form.appendChild(unit_price_value);
+            item_price_form.appendChild(item_price);
+            item_price_form.appendChild(item_price_value);
+            cola.appendChild(product_name);
+            cola.appendChild(product_img);
+            colb.appendChild(unit_price_form);
+            colb.appendChild(quantity_form);
+            colb.appendChild(item_price_form);
+            row.appendChild(cola);
+            row.appendChild(colb);
+            colb.appendChild(delbutt);
+
+            cart_box.appendChild(row);
+            hr = document.createElement('hr');
+            cart_box.appendChild(hr);
+        }
+    }
+</script>
+{% endblock content %}

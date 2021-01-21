@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card bg-orange text-pink px-2">
+    <h1 class="text-center">Product {{product_id}} page</h1>
+    <div class="text-center card container-fluid py-2" id="product-box">
+        {% if shop.username.username ==  user.username %}
+            <div class="row justify-content-end">
+                <button type="button" id="edit-butt" class="col-auto btn btn-primary mr-2">
+                    <i class="fas fa-edit fa-lg"></i>Edit
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+<script>
+
+    let product_box = document.getElementById("product-box");
+    let body = document.body;
+    let categoryList = {};
+    //let subcategoryList = {};
+    {% if shop.username.username ==  user.username %}
+       let butt = document.getElementById("edit-butt");
+       butt.addEventListener("click", editInfo);
+    {% endif %}
+
+    body.onload = loadProduct();
+
+    function addtoCart(event){
+        //console.log("add to cart");
+        PushNotification("added to cart", false);
+        quantity = parseInt(document.getElementById("q_input").value)
+        if (isNaN(quantity)){
+            quantity = 1
+        }
+        axios.post("{% url 'cart-api' %}", {
+                'product_id': {{product_id}},
+                'quantity': quantity
+                })
+        .then(function(response) {
+        })
+        .catch(function(error) {
+            console.log(error);
+        })
+        .then(function() {
+            //console.log(product_dump)
+        });
+    }
+
+    function buyproduct(event){
+        //console.log("Buy product");
+        //PushNotification("Buy product", false);
+        addtoCart();
+        window.location.href = "{% url 'cart' %}";
+    }
+
+    function loadProduct(event){
+        axios.get("{% url 'product-api' %}", {
+            params:{
+                'product_id': {{product_id}}
+            }
+        })
+        .then(function(response) {
+            showProduct(response.data);
+        })
+        .catch(function(error) {
+            console.log(error)
+        })
+        .then(function() {
+           
+           //console.log(product_dump)
+        });
+    }
+
+    function showProduct(product_data){
+        //console.log(product_data.id)
+        row_a = document.createElement('div');
+        row_a.setAttribute("class", "row");
+        pimg_div = document.createElement('div');
+        pimg_div.setAttribute("class", "col-4");
+        pimg = document.createElement('img');
+        pimg.setAttribute("class", "img-thumbnail");
+        pimg.setAttribute("width", "250");
+        pimg.setAttribute("src", product_data.img);
+        pimg.setAttribute("id", "pimg");
+        head_div = document.createElement('div');
+        head_div.setAttribute("class", "col-8");
+        pname = document.createElement('h2');
+        pname.innerHTML = product_data.name;
+        pname.setAttribute("id", "pname");
+        pprice = document.createElement('h4');
+        pprice.innerHTML = "Price: ฿" + product_data.price;
+        pprice.setAttribute("id", "pprice");
+        pcategory = document.createElement('div');
+        pcategory.setAttribute("id", "pcategory");
+        pcategorylabel = document.createElement('h4');
+        pcategorylabel.innerHTML = "Category: ";
+        if (product_data.category){
+            pcategorylabel.innerHTML += product_data.subcategory.categoryinfo.name;
+            pcategorylabel.innerHTML += " -> ";
+            pcategorylabel.innerHTML += product_data.subcategory.name;
+        }
+        pcategory.appendChild(pcategorylabel);
+
+        pshop = document.createElement('h4');
+        pshop.innerHTML = "By: " + "{{shop.shop_name}}";
+        pshop.setAttribute("id", "pshop");
+
+        row_b = document.createElement('div');
+        row_b.setAttribute("class", "row");
+        pdesc = document.createElement('p');
+        pdesc.innerHTML = product_data.prod_desc;
+        pdesc.setAttribute("id", "pdesc");
+        info_div = document.createElement('div');
+        info_div.setAttribute("class", "col-12");
+
+        pimg_div.appendChild(pimg);
+        head_div.appendChild(pname);
+        head_div.appendChild(pprice);
+        head_div.appendChild(pcategory);
+        head_div.appendChild(pshop);
+
+        {% if user.groups.all.0.name != "Seller" %}
+        q_div = document.createElement('div');
+        q_div.classList.add('form-group', 'row');
+        q_label = document.createElement("label");
+        q_label.classList.add('col-form-label', 'col');
+        q_label.innerHTML = "Amount: ";
+        q_input_div = document.createElement('div');
+        q_input_div.classList.add('col-10');
+        q_input = document.createElement("input");
+        q_input.classList.add('form-control');
+        q_input.setAttribute("type", "number");
+        q_input.setAttribute("id", "q_input");
+        q_input.setAttribute("value", "1");
+        addbut = document.createElement("button");
+        addbut.innerHTML += "Add to Cart";
+        addbut.setAttribute("type", "button");
+        {% if user.is_authenticated %}
+        addbut.setAttribute("onclick", "addtoCart(event)");
+        {% else %}
+        addbut.setAttribute("onclick", "location.href = {% url 'login' %}");
+        {% endif %}
+        addbut.classList.add('btn', 'btn-primary', 'mx-2');
+        buybut = document.createElement("button");
+        buybut.innerHTML += "Buy";
+        buybut.setAttribute("type", "button");
+        buybut.classList.add('btn', 'btn-danger', 'mx-2');
+        {% if user.is_authenticated %}
+        buybut.setAttribute("onclick", "buyproduct(event)");
+        {% else %}
+        buybut.setAttribute("onclick", "location.href = {% url 'login' %}");
+        {% endif %}
+
+        q_input_div.appendChild(q_input);
+        q_div.appendChild(q_label);
+        q_div.appendChild(q_input_div);
+        head_div.appendChild(q_div);
+        head_div.appendChild(addbut);
+        head_div.appendChild(buybut);
+        {% endif %}
+
+        row_a.appendChild(pimg_div);
+        row_a.appendChild(head_div);
+
+        info_div.appendChild(pdesc);
+        row_b.appendChild(info_div);
+
+        product_box.appendChild(row_a);
+        hr = document.createElement("hr");
+        product_box.appendChild(hr);
+        //product_box.innerHTML += "<hr/>";
+        product_box.appendChild(row_b);
+    }
+
+    function loadCategory(category_id=""){
+        if (category_id){
+            param = {
+                'category_id': category_id
+            };
+        }else{
+            param = {};
+        }
+
+        axios.get("{% url 'category-api' %}", {
+            params: param
+        })
+        .then(function(response) {
+            //console.log(response.data);
+            if (category_id){
+                subcategoryList =  response.data;
+                psubcategoryin = document.getElementById("psubcategoryin");
+                psubcategoryin.innerHTML = "";
+                for (subcategory in subcategoryList){
+                    psubcategoryoption = document.createElement("option");
+                    psubcategoryoption.setAttribute("value", subcategoryList[subcategory].id);
+                    psubcategoryoption.innerHTML = subcategoryList[subcategory].name;
+                    psubcategoryin.appendChild(psubcategoryoption);
+                }
+            }else{
+                categoryList =  response.data;
+                pcategory.firstElementChild.innerHTML = "Category";
+                for (category in categoryList){
+                    pcategoryoption = document.createElement("option");
+                    pcategoryoption.setAttribute("value", categoryList[category].id);
+                    pcategoryoption.innerHTML = categoryList[category].name;
+                    pcategoryin.appendChild(pcategoryoption);
+                    loadCategory(categoryList[0].id);
+                }
+            }
+        })
+        .catch(function(error) {
+            console.log(error)
+        })
+        .then(function() {
+           
+           //console.log(product_dump)
+        });
+    }
+
+    function editInfo(event){
+        button = event.target;
+        button.innerHTML = "";
+        isave = document.createElement('i');
+        isave.setAttribute("class", "fas fa-save fa-lg");
+        button.appendChild(isave);
+        button.innerHTML += " Save";
+        butt.removeEventListener("click", editInfo);
+        butt.addEventListener("click", saveInfo);
+
+        pimg = document.getElementById("pimg");
+        imgin = document.createElement("input");
+        imgin.setAttribute("type", "file");
+        imgin.setAttribute("accept", "image/*");
+        imgin.setAttribute("id", "imgin");
+        imgin.setAttribute("class", "form-control");
+        imgin.addEventListener("change", changeImg);
+        pimg.parentNode.appendChild(imgin);
+
+        pname = document.getElementById("pname");
+        pnamein = document.createElement("input");
+        pnamein.setAttribute("type", "text");
+        pnamein.setAttribute("value", pname.innerHTML);
+        pnamein.setAttribute("class", "form-control text-center");
+        pname.innerHTML = "";
+        pname.appendChild(pnamein);
+
+        pprice = document.getElementById("pprice");
+        ppricein = document.createElement("input");
+        ppricein.setAttribute("type", "text");
+        ppricein.setAttribute("step", 0.01);
+        ppricein.setAttribute("value", parseFloat(pprice.innerHTML.slice(8)));
+        ppricein.setAttribute("class", "form-control text-center");
+        ppricein.setAttribute("onkeypress", "return isNumberKey(event)");
+        pprice.innerHTML = "";
+        pprice.appendChild(ppricein);
+
+        pcategory = document.getElementById("pcategory");
+        pcategoryin = document.createElement("select");
+        pcategoryin.setAttribute("id", "pcategoryin");
+        pcategoryin.addEventListener("change", function(){loadCategory(this.options[this.selectedIndex].value);});
+        loadCategory();
+
+        psubcategoryin = document.createElement("select");
+        psubcategoryin.setAttribute("id", "psubcategoryin");
+
+        //pcategory.innerHTML = "Category: ";
+        pcategory.appendChild(pcategoryin);
+        //pcategory.innerHTML += " / ";
+        pcategory.appendChild(psubcategoryin);
+
+        pdesc = document.getElementById("pdesc");
+        pdescin = document.createElement("input");
+        pdescin.setAttribute("type", "text");
+        pdescin.setAttribute("value", pdesc.innerHTML);
+        pdescin.setAttribute("class", "form-control text-center");
+        pdesc.innerHTML = "";
+        pdesc.appendChild(pdescin);
+    }
+
+    function saveInfo(event){
+        imgin = document.getElementById("imgin");
+        pname = document.getElementById("pname");
+        pprice = document.getElementById("pprice");
+        pdesc = document.getElementById("pdesc");
+        psubcategoryin = document.getElementById("psubcategoryin");
+        pcategoryin = document.getElementById("pcategoryin");
+        let fd = new FormData(); 
+        /*fd.append('params', {name: pname.firstChild.value,
+                price: pprice.firstChild.value,
+                prod_desc: pdesc.firstChild.value,
+                });*/
+        fd.append('name', pname.firstChild.value);
+        fd.append('price', parseFloat(pprice.firstChild.value).toFixed(2));
+        fd.append('prod_desc', pdesc.firstChild.value);
+        fd.append('product_id', '{{product_id}}');
+        fd.append('category', parseInt(psubcategoryin.options[psubcategoryin.selectedIndex].value));
+        if (imgin.files.length > 0){
+            fd.append('img', imgin.files[0]);
+        }
+        //console.log(fd)
+        axios.put("{% url 'product-api' %}", fd, 
+                    {
+                    headers: {
+                        'Content-Type': "multipart/form-data"
+                    }
+                })
+        .then(function(response) {
+            button = event.target;
+            button.innerHTML = "";
+            isave = document.createElement('i');
+            isave.setAttribute("class", "fas fa-edit fa-lg");
+            button.appendChild(isave);
+            button.innerHTML += " Edit";
+            
+            imgin.remove();
+            pname.innerHTML = pname.firstChild.value;
+            pprice.innerHTML = "Price: ฿" + parseFloat(pprice.firstChild.value).toFixed(2);
+            pcategorylabel.innerHTML = "Category: "+ pcategoryin.options[pcategoryin.selectedIndex].text;
+            pcategorylabel.innerHTML += " -> " + psubcategoryin.options[psubcategoryin.selectedIndex].text;
+            pcategoryin.remove();
+            psubcategoryin.remove();
+            pdesc.innerHTML = pdesc.firstChild.value;
+
+            butt.removeEventListener("click", saveInfo);
+            butt.addEventListener("click", editInfo);
+        })
+        .catch(function(error) {
+            //console.log(error);
+            PushNotification(error.response.data);
+        })
+        .then(function() {
+            //console.log(product_dump)
+        });
+    }
+
+    function changeImg(event) {
+        input =  event.target
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+    
+            reader.onload = function(e) {
+                let img = document.getElementById("pimg");
+                img.setAttribute('src', e.target.result);
+            };
+            
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function isNumberKey(event){
+        var charCode = (event.which) ? event.which : event.keyCode;
+        if (charCode != 46 && charCode > 31 && (charCode < 48 || charCode > 57)){
+            return false;
+        }
+        return true;
+    }
+
+</script>
+{% endblock content %}

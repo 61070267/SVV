@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card bg-orange text-pink px-2">
+    <h1 class="text-center">Catalog</h1>
+        <div id="catalog-box" class="text-center">
+        </div>
+</div>
+<script>
+    document.onload =loadCategory();
+    let catalog_box = document.getElementById("catalog-box");
+
+    function loadCategory(){
+        axios.get("{% url 'category-api' %}", {
+        })
+        .then(function(response) {
+            Categoryrender(response.data);
+
+            $(".collapse").one('show.bs.collapse', function(event){
+                loadSubCategory($(this).data('id'), event.target);
+            });
+        })
+        .catch(function(error) {
+            console.log(error)
+        })
+        .then(function() {
+           
+           //console.log(product_dump)
+        });
+    }
+
+    function loadSubCategory(category_id, targetElement){
+        axios.get("{% url 'category-api' %}", {
+            params: {
+                'category_id': category_id
+            }
+        })
+        .then(function(response) {
+            SubCategoryrender(response.data, targetElement);
+        })
+        .catch(function(error) {
+            console.log(error)
+        })
+        .then(function() {
+           
+           //console.log(product_dump)
+        });
+    }
+
+    function Categoryrender(categoryList){
+        for (category in categoryList){
+            category_div = document.createElement('div');
+            category_div.classList.add("card", "m-2");
+            category_head = document.createElement('div');
+            category_head.classList.add("card-header");
+            category_head.setAttribute("data-toggle", "collapse");
+            category_head.setAttribute("href", "#collapse"+category);
+            category_name = document.createElement('h2');
+            category_name.classList.add("m-1", "text-center", "col");
+            category_name.innerHTML = categoryList[category].name;
+
+            category_body = document.createElement('div');
+            category_body.setAttribute("id", "collapse"+category);
+            category_body.setAttribute("data-id", categoryList[category].id);
+            category_body.classList.add("panel-collapse", "collapse");
+
+            category_info = document.createElement('div');
+            sub_category = document.createElement('h3');
+            sub_category.innerHTML = "Loading";
+
+            category_info.appendChild(sub_category);
+
+            category_head.appendChild(category_name);
+            category_body.appendChild(category_info);
+            category_div.appendChild(category_head);
+            category_div.appendChild(category_body);
+            catalog_box.appendChild(category_div);
+        }
+    }
+
+    function SubCategoryrender(subcategoryList, targetElement){
+        console.log(subcategoryList);
+        targetElement.innerHTML = "";
+        subcategory_box = document.createElement('div');
+        subcategory_box.classList.add('row', 'col', 'justify-content-center');
+        for (subcategory in subcategoryList){
+                subcategory_div = document.createElement('button');
+                subcategory_div.classList.add('btn', 'btn-primary', 'col-3','m-1');
+                subcategory_info = document.createElement('h5');
+                subcategory_info.classList.add('text-white');
+                subcategory_info.innerHTML = subcategoryList[subcategory].name;
+                subcategory_link = document.createElement('a');
+                subcategory_link.setAttribute("href", "{% url 'search'%}?catalog_id="+subcategoryList[subcategory].id);
+
+                subcategory_link.appendChild(subcategory_info);
+                subcategory_div.appendChild(subcategory_link);
+                subcategory_box.appendChild(subcategory_div);
+        }
+        targetElement.appendChild(subcategory_box);
+    }
+
+</script>
+{% endblock content %}

@@ -1,0 +1,29 @@
+.toast {
+    position: absolute;
+    top: 2%;
+    right: 2%;
+    z-index: 2000;
+}
+.pt-6 {
+    padding-top: 6em;
+}
+
+.bg-grey {
+    background-color: darkgrey;
+}
+
+.bg-pink {
+    background-color: #DB10B5;
+}
+
+.bg-orange {
+    background-color: #FFAA00;
+}
+
+.text-pink {
+    color: #DB10B5;
+}
+
+.text-orange {
+    color: #FFAA00;
+}

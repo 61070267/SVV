@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card bg-orange text-pink px-2">
+        <h1 class="text-center">Payment History</h1>
+        <div class="text-center card container-fluid py-2" id="pay-box">
+    </div>
+</div>
+<script>
+    let pay_box = document.getElementById("pay-box");
+    document.body.onload = loadPayment();
+
+    function loadPayment(){
+            axios.get("{% url 'pay-api' %}", {
+        })
+        .then(function(response) {
+            //console.log("loadPayment");
+            //console.log(response.data);
+            Paymentrender(response.data);
+
+            $(".collapse").one('show.bs.collapse', function(event){
+                console.log(event.target);
+                loadCart($(this).data('id'), event.target);
+            });
+        })
+        .catch(function(error) {
+            console.log(error)
+        })
+        .then(function() {
+           
+           //console.log(product_dump)
+        });
+    }
+
+    function loadCart(cart_id, targetElement){
+        axios.get("{% url 'cart-api' %}", {
+                params: {
+                    'cart_id': cart_id
+            }
+        })
+        .then(function(response) {
+            console.log("loadCart");
+            console.log(response.data);
+            loadCartItem(response.data.id, targetElement);
+        })
+        .catch(function(error) {
+            console.log(error)
+        })
+        .then(function() {
+           
+           //console.log(product_dump)
+        });
+    }
+
+    function loadCartItem(cart_id, targetElement){
+        axios.get("{% url 'cart-api' %}", {
+                params: {
+                    'cart_item': cart_id,
+            }
+        })
+        .then(function(response) {
+            console.log("loadCartItem");
+            console.log(response.data);
+            CartItemrender(response.data, targetElement);
+        })
+        .catch(function(error) {
+            console.log(error)
+        })
+        .then(function() {
+           //console.log(product_dump)
+        });
+    }
+
+    function CartItemrender(CartItemList, targetElement){
+        targetElement.innerHTML = '';
+        for (Item in CartItemList){
+            row = document.createElement('div');
+            row.classList.add("row", "m-2");
+            cola = document.createElement('div');
+            cola.classList.add("col-4", "mx-2");
+            colb = document.createElement('div');
+            colb.classList.add("col", "mx-2");
+
+            quantity_form = document.createElement('div');
+            quantity_form.classList.add("m-1", "row");
+            quantity = document.createElement('h5');
+            quantity.classList.add("mt-3", "col-4");
+            quantity.innerHTML = "Quantity:";
+            quantity_value = document.createElement('h5');
+            quantity_value.classList.add("mt-3", "col");
+            quantity_value.innerHTML = CartItemList[Item].quantity;
+
+            unit_price_form = document.createElement('div');
+            unit_price_form.classList.add("m-1", "row");
+            unit_price = document.createElement('h5');
+            unit_price.classList.add("mt-3", "col-4");
+            unit_price.innerHTML = "Unit price:";
+            unit_price_value = document.createElement('h5');
+            unit_price_value.classList.add("mt-3", "col");
+            unit_price_value.innerHTML = CartItemList[Item].unit_price;
+
+            item_price_form = document.createElement('div');
+            item_price_form.classList.add("m-1", "row");
+            item_price = document.createElement('h5');
+            item_price.classList.add("m-1", "col-4");
+            item_price.innerHTML = "Item price:";
+            item_price_value = document.createElement('h5');
+            item_price_value.classList.add("m-1", "col");
+            item_price_value.innerHTML = CartItemList[Item].item_price;
+
+            product_name = document.createElement('h5');
+            product_name.classList.add("m-1", "text-center");
+            product_name.innerHTML = CartItemList[Item].product.name;
+            product_img = document.createElement('img');
+            product_img.setAttribute("src", CartItemList[Item].product.img);
+            product_img.setAttribute("width", "150");
+            product_img.setAttribute("height", "150");
+            product_img.classList.add("img-thumbnail");
+            product_img.classList.add("img-rounded");
+
+            quantity_form.appendChild(quantity);
+            quantity_form.appendChild(quantity_value);
+            unit_price_form.appendChild(unit_price);
+            unit_price_form.appendChild(unit_price_value);
+            item_price_form.appendChild(item_price);
+            item_price_form.appendChild(item_price_value);
+            cola.appendChild(product_name);
+            cola.appendChild(product_img);
+            colb.appendChild(unit_price_form);
+            colb.appendChild(quantity_form);
+            colb.appendChild(item_price_form);
+            row.appendChild(cola);
+            row.appendChild(colb);
+
+            targetElement.appendChild(row);
+            hr = document.createElement('hr');
+            targetElement.appendChild(hr);
+        }
+    }
+
+    function Paymentrender(paymentList){
+        for (payItem in paymentList){
+            pay_div = document.createElement('div');
+            pay_div.classList.add("card");
+            pay_head = document.createElement('div');
+            pay_head.classList.add("row", "card-header");
+            pay_head.setAttribute("data-toggle", "collapse");
+            pay_head.setAttribute("href", "#collapse"+payItem);
+            cart_id = document.createElement('h5');
+            cart_id.classList.add("m-1", "text-center", "col");
+            cart_id.innerHTML = "Cart id: " + paymentList[payItem].cart_id;
+            amount = document.createElement('h5');
+            amount.classList.add("m-1", "text-center", "col");
+            amount.innerHTML = "Amount: " + paymentList[payItem].amount;
+            payment = document.createElement('h5');
+            payment.classList.add("m-1", "text-center", "col");
+            payment.innerHTML = "Payment: " + paymentList[payItem].payment;
+
+            pay_body = document.createElement('div');
+            pay_body.setAttribute("id", "collapse"+payItem);
+            pay_body.setAttribute("data-id", paymentList[payItem].cart_id);
+            pay_body.classList.add("panel-collapse", "collapse");
+
+            cart_info = document.createElement('div');
+            cartitem_name = document.createElement('h3');
+            cartitem_name.innerHTML = "Loading";
+
+            cart_info.appendChild(cartitem_name);
+
+            pay_head.appendChild(cart_id);
+            pay_head.appendChild(amount);
+            pay_head.appendChild(payment);
+            pay_body.appendChild(cart_info);
+            pay_div.appendChild(pay_head);
+            pay_div.appendChild(pay_body);
+            pay_box.appendChild(pay_div);
+        }
+    }
+</script>
+{% endblock content %}
